@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Funfair Number Gashapon · Enlightened Eng</title>
+<style>
+@font-face{font-family:Mali;src:url(assets/font/Mali-Regular.ttf) format('truetype');font-weight:400;font-display:block}
+@font-face{font-family:Mali;src:url(assets/font/Mali-Bold.ttf) format('truetype');font-weight:700;font-display:block}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#2b1840;overflow:hidden;font-family:Mali,system-ui,sans-serif;color:#4a2a1a;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:50% 50%;overflow:hidden;overflow:clip;background:url(assets/img/bg.webp) center/cover no-repeat}
+.abs{position:absolute}
+img{-webkit-user-drag:none;user-drag:none;pointer-events:none}
+
+/* ---------- title + range ---------- */
+#title{left:40px;top:22px;line-height:1}
+#title .t1{font-size:54px;font-weight:700;color:#ff6f8e;-webkit-text-stroke:10px #fff;paint-order:stroke fill;text-shadow:0 5px 0 rgba(120,50,120,.25)}
+#title .t2{font-size:22px;font-weight:700;color:#fff;margin:6px 0 0 6px;text-shadow:0 2px 3px rgba(80,30,90,.6)}
+#ranges{left:40px;top:128px;display:grid;grid-template-columns:repeat(2,250px);gap:14px 18px}
+#tools{left:40px;top:290px;display:flex;gap:14px}
+
+/* ---------- pill buttons ---------- */
+.pill{position:relative;border:0;padding:0;background:transparent center/100% 100% no-repeat;font-family:Mali;font-weight:700;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;text-shadow:0 2px 0 rgba(0,0,0,.28),0 0 6px rgba(0,0,0,.18);transition:transform .12s, filter .2s, opacity .2s;filter:drop-shadow(0 6px 6px rgba(70,20,70,.28))}
+.pill:active:not(:disabled){transform:translateY(3px) scale(.97)}
+.pill:disabled{filter:grayscale(.85) brightness(1.1);opacity:.5;cursor:not-allowed}
+.pill .sub{font-size:.5em;font-weight:400;margin-top:3px;opacity:.95}
+.p-teal{background-image:url(assets/img/pill_teal.webp)}
+.p-coral{background-image:url(assets/img/pill_coral.webp)}
+.p-lilac{background-image:url(assets/img/pill_lilac.webp)}
+.p-yellow{background-image:url(assets/img/pill_yellow.webp);color:#6b3d00;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.range{width:250px;height:58px;font-size:32px}
+.range.on{outline:5px solid #fff;outline-offset:3px;border-radius:40px;animation:none}
+.range.on::after{content:'★';position:absolute;right:-8px;top:-16px;font-size:30px;color:#ffd23f;-webkit-text-stroke:2px #fff;paint-order:stroke fill;text-shadow:none}
+.chip{border:0;font-family:Mali;font-weight:700;font-size:20px;color:#6b3d6b;background:rgba(255,255,255,.88);border-radius:30px;padding:8px 18px;cursor:pointer;box-shadow:0 4px 0 rgba(120,60,130,.35)}
+.chip:active{transform:translateY(2px)}
+
+#bar{left:0;top:890px;width:1920px;height:190px}
+#bar .pill{position:absolute}
+#btnListen{left:330px;top:40px;width:360px;height:86px;font-size:36px}
+#btnSpin{left:750px;top:22px;width:420px;height:116px;font-size:56px}
+#btnReveal{left:1230px;top:40px;width:360px;height:86px;font-size:36px}
+#btnNew{left:1640px;top:52px;width:250px;height:62px;font-size:26px}
+.glow:not(:disabled){animation:glow 1.1s ease-in-out infinite}
+@keyframes glow{0%,100%{filter:drop-shadow(0 6px 6px rgba(70,20,70,.28)) drop-shadow(0 0 0 #fff)}50%{filter:drop-shadow(0 6px 6px rgba(70,20,70,.28)) drop-shadow(0 0 18px #fff6b0);transform:scale(1.04)}}
+
+/* ---------- machine ---------- */
+#balls{left:690px;top:70px;width:540px;height:430px}
+#machine{left:633px;top:40px;width:654px}
+#machine.shake{animation:shake .16s linear infinite}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,1px) rotate(-.4deg)}75%{transform:translate(3px,-1px) rotate(.4deg)}}
+#handle{left:1119px;top:566px;width:134px;transform-origin:27px 28px}
+#display{left:726px;top:548px;width:338px;height:87px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:70px;color:#e2456b;text-shadow:0 3px 0 #fff;pointer-events:none}
+#display.small{font-size:38px;color:#8a5a3a}
+#popcap{width:84px;left:918px;top:700px;opacity:0;z-index:5}
+
+/* ---------- characters & decor ---------- */
+.kid{bottom:200px;height:450px;transform:translateX(-50%)}
+.kid img{height:100%;display:block;animation:bob 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.kid.pop img{animation:pop .45s ease-out, bob 2.6s ease-in-out .45s infinite}
+#boy{left:420px}#girl{left:1430px}
+#girl img{animation-delay:-1.3s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pop{0%{transform:scale(.92,1.06)}55%{transform:scale(1.05,.95)}100%{transform:scale(1)}}
+.shadow{background:radial-gradient(ellipse at center,rgba(90,40,60,.35),rgba(90,40,60,0) 70%);height:40px}
+.deco{animation:bob 3.4s ease-in-out infinite}
+
+/* ---------- history panel ---------- */
+#panel{left:1532px;top:20px;width:370px}
+#panelIn{left:1565px;top:150px;width:310px;height:380px;display:flex;flex-direction:column;align-items:center}
+#panelIn h3{margin:0;font-size:27px;line-height:1.1;color:#d23f6a}
+#panelIn .cnt{font-size:20px;color:#7b5a45;margin:2px 0 8px}
+#recent{display:grid;grid-template-columns:repeat(4,70px);grid-auto-rows:64px;gap:8px;height:208px;align-content:start}
+.ball{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:34px;color:#5a2d0c;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--c) 45%,var(--d) 100%);box-shadow:inset 0 -4px 0 rgba(0,0,0,.12),0 3px 4px rgba(100,50,80,.25)}
+#recent .ball{width:64px;height:64px;margin:auto}
+#recent .ball.new{outline:4px solid #ffc531;outline-offset:2px;animation:pop .5s}
+#recent .empty{grid-column:1/-1;font-size:20px;color:#a08670;text-align:center;padding-top:60px;line-height:1.4}
+#btnAll{margin-top:auto;font-size:21px}
+
+/* ---------- reveal overlay ---------- */
+#dim{left:0;top:0;width:1920px;height:885px;background:radial-gradient(ellipse at 50% 45%,rgba(60,20,80,.35),rgba(40,10,60,.72));opacity:0;pointer-events:none;transition:opacity .35s;z-index:6}
+#dim.on{opacity:1;pointer-events:auto}
+#stagecap{left:800px;top:230px;width:320px;height:320px;z-index:8;pointer-events:none;opacity:0}
+#stagecap img{position:absolute;left:0;width:100%}
+#capWhole{top:0}
+#capTop{top:0;display:none}
+#capBot{bottom:0;display:none}
+#number{left:560px;top:200px;width:800px;height:360px;z-index:9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:340px;line-height:1;color:#ff5f86;-webkit-text-stroke:18px #fff;paint-order:stroke fill;text-shadow:0 12px 0 rgba(120,40,90,.3);pointer-events:none;opacity:0}
+#mq{left:550px;top:600px;width:820px;z-index:8;pointer-events:none;opacity:0}
+#mqText{left:590px;top:640px;width:740px;height:162px;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:92px;line-height:1.05;color:#7a3b17;pointer-events:none;opacity:0}
+#mqText .sub{font-size:28px;font-weight:400;color:#9b6a4a;margin-top:6px}
+#mqText.listen{color:#1aa39a}
+#fx{left:0;top:0;width:1920px;height:1080px;pointer-events:none;z-index:10;overflow:clip}
+.kidsTop,#panel,#panelIn,#tools{z-index:7}
+#bar{z-index:11}
+.wave{display:inline-block;animation:ear .9s ease-in-out infinite}
+@keyframes ear{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(10deg) scale(1.1)}}
+
+/* ---------- modal ---------- */
+#modal{left:0;top:0;width:1920px;height:1080px;background:rgba(40,15,60,.6);z-index:20;display:none;align-items:center;justify-content:center}
+#modal.on{display:flex}
+.card{background:#fffaf0;border:6px solid #f2c14e;border-radius:40px;box-shadow:0 0 0 8px #3cc6bb,0 30px 60px rgba(0,0,0,.35);padding:40px 56px;max-width:1500px;max-height:960px;overflow:auto;text-align:center;position:relative}
+.card h2{margin:0 0 6px;font-size:58px;color:#ff5f86;-webkit-text-stroke:6px #fff;paint-order:stroke fill}
+.card p{font-size:28px;margin:8px 0;color:#6b4a35}
+.card .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin:22px 0 6px}
+.card .bigbtn{width:330px;height:84px;font-size:34px}
+.card .x{position:absolute;right:22px;top:16px;font-size:44px;border:0;background:none;color:#c66;cursor:pointer;font-family:Mali}
+.keys{font-size:21px !important;color:#9b7a63 !important;margin-top:18px !important}
+.tabs{display:flex;gap:12px;justify-content:center;margin:14px 0 20px}
+.tabs .chip.on{background:#ff6f8e;color:#fff}
+.board{display:grid;grid-template-columns:repeat(10,86px);gap:8px;justify-content:center}
+.board div{height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;background:#f1e8dd;color:#c9b7a6}
+.board div.hit{background:#ffd76a;color:#6b3d00;box-shadow:inset 0 -4px 0 rgba(0,0,0,.1)}
+.order{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:1300px}
+.order .ball{width:84px;height:84px;font-size:38px;position:relative}
+.order .ball i{position:absolute;top:-6px;left:-4px;font-style:normal;font-size:16px;background:#fff;color:#a77;border-radius:12px;padding:0 6px}
+.set label{display:block;font-size:28px;margin:18px 0 8px;color:#6b4a35}
+.set select{font-family:Mali;font-size:24px;padding:10px 14px;border-radius:16px;border:3px solid #3cc6bb;max-width:900px}
+.set input[type=range]{width:520px;accent-color:#ff6f8e}
+
+#toast{left:50%;top:24px;transform:translateX(-50%);background:#fff;border:4px solid #ff6f8e;border-radius:26px;padding:14px 28px;font-size:26px;z-index:30;display:none;max-width:1100px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;background:#2b1840;z-index:99}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div id="loading">Loading… กำลังโหลด</div>
+<div id="stage">
+  <div id="title" class="abs"><div class="t1">Number Gashapon</div><div class="t2">Funfair English 1–100 · Enlightened Eng</div></div>
+  <div id="ranges" class="abs">
+    <button class="pill range p-teal" data-max="10">1 – 10</button>
+    <button class="pill range p-coral" data-max="20">1 – 20</button>
+    <button class="pill range p-lilac" data-max="50">1 – 50</button>
+    <button class="pill range p-yellow" data-max="100">1 – 100</button>
+  </div>
+  <div id="tools" class="abs">
+    <button class="chip" id="btnSettings">🔊 Sound · เสียง</button>
+    <button class="chip" id="btnFull">⛶ Full screen</button>
+  </div>
+
+  <!-- decor -->
+  <div class="abs shadow" style="left:30px;top:860px;width:230px"></div>
+  <img class="abs deco" src="assets/img/elephant.webp" style="left:20px;top:680px;height:200px;animation-delay:-.6s" alt="">
+  <div class="abs shadow" style="left:1595px;top:862px;width:300px"></div>
+  <img class="abs deco" src="assets/img/bunny.webp" style="left:1600px;top:700px;height:180px;animation-delay:-1.8s" alt="">
+  <img class="abs deco" src="assets/img/duck.webp" style="left:1745px;top:716px;height:165px;animation-delay:-2.7s" alt="">
+
+  <!-- machine -->
+  <div class="abs shadow" style="left:640px;top:810px;width:640px;height:60px"></div>
+  <canvas id="balls" class="abs"></canvas>
+  <img id="machine" class="abs" src="assets/img/machine.webp" alt="gashapon machine">
+  <img id="handle" class="abs" src="assets/img/handle.webp" alt="">
+  <div id="display" class="abs small">Ready!</div>
+  <img id="popcap" class="abs" src="assets/img/cap_coral.webp" alt="">
+
+  <!-- history panel -->
+  <img id="panel" class="abs" src="assets/img/frame.webp" alt="">
+  <div id="panelIn" class="abs">
+    <h3>Numbers · เลขที่ออก</h3>
+    <div class="cnt" id="cnt">0 / 100</div>
+    <div id="recent"></div>
+    <button class="chip" id="btnAll">📋 See all · ดูทั้งหมด</button>
+  </div>
+
+  <!-- reveal overlay -->
+  <div id="dim" class="abs"></div>
+  <div id="stagecap" class="abs">
+    <img id="capWhole" src="assets/img/cap_coral.webp" alt="">
+    <img id="capTop" src="assets/img/top_coral.webp" alt="">
+    <img id="capBot" src="assets/img/bot_coral.webp" alt="">
+  </div>
+  <div id="number" class="abs"></div>
+  <img id="mq" class="abs" src="assets/img/marquee.webp" alt="">
+  <div id="mqText" class="abs"></div>
+
+  <!-- kids (above dim) -->
+  <div class="abs shadow kidsTop" style="left:300px;top:860px;width:240px"></div>
+  <div class="abs shadow kidsTop" style="left:1310px;top:860px;width:240px"></div>
+  <div id="boy" class="abs kid kidsTop"><img src="assets/img/boy_wave.webp" alt=""></div>
+  <div id="girl" class="abs kid kidsTop"><img src="assets/img/girl_wave.webp" alt=""></div>
+
+  <div id="fx" class="abs"></div>
+
+  <!-- controls -->
+  <div id="bar" class="abs">
+    <button id="btnListen" class="pill p-teal abs" disabled>🔈 Listen again<span class="sub">ฟังอีกครั้ง</span></button>
+    <button id="btnSpin" class="pill p-coral abs" disabled>SPIN!<span class="sub">หมุนกาชาปอง</span></button>
+    <button id="btnReveal" class="pill p-yellow abs" disabled>👀 Reveal<span class="sub">เปิดเฉลย</span></button>
+    <button id="btnNew" class="pill p-lilac abs">⟲ New game<span class="sub">เริ่มใหม่</span></button>
+  </div>
+
+  <div id="modal" class="abs"><div class="card" id="card"></div></div>
+  <div id="toast" class="abs"></div>
+  <div class="sr" aria-live="polite" id="live"></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const COLORS = ['coral','teal','yellow','lilac','mint'];
+const BALLCSS = {coral:['#ffb3bf','#ff6f8e'],teal:['#9ff0ea','#2cc4ba'],yellow:['#ffeaa0','#ffc531'],lilac:['#e3c7ff','#b47ff0'],mint:['#bff5d2','#5fd68d']};
+const IMG = n => `assets/img/${n}.webp`;
+const STORE = 'enlightenedeng.numberGashapon.v1';
+const MAX_BALLS = 16;
+
+/* ---------------- scaling ---------------- */
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit);fit();
+
+/* ---------------- number words ---------------- */
+const ONES=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+const TENS=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+function words(n){
+  if(n===100) return 'one hundred';
+  if(n<20) return ONES[n];
+  const t=Math.floor(n/10),o=n%10;
+  return TENS[t]+(o?'-'+ONES[o]:'');
+}
+
+/* ---------------- state ---------------- */
+let S = {max:100, drawn:[], revealed:[], pending:null, rate:.85, voice:''};
+let phase = 'idle'; // idle | spinning | pending | revealed | empty
+let busy = false;
+function load(){try{const d=JSON.parse(localStorage.getItem(STORE)||'null');if(d&&Array.isArray(d.drawn))return d;}catch(e){}return null;}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+const remaining = () => S.max - S.drawn.length;
+function pickNumber(){
+  const used=new Set(S.drawn);const pool=[];
+  for(let i=1;i<=S.max;i++) if(!used.has(i)) pool.push(i);
+  if(!pool.length) return null;
+  const r=new Uint32Array(1);crypto.getRandomValues(r);
+  return pool[r[0]%pool.length];
+}
+
+/* ---------------- sound fx (Web Audio) ---------------- */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,t0,d,type='sine',v=.18,f2){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,a.currentTime+t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,a.currentTime+t0+d);g.gain.setValueAtTime(0,a.currentTime+t0);g.gain.linearRampToValueAtTime(v,a.currentTime+t0+.01);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t0+d);o.connect(g).connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+d+.05);}
+const sfx={
+  click(){tone(1400,0,.04,'square',.06);},
+  pop(){tone(300,0,.18,'sine',.25,900);},
+  roll(){for(let i=0;i<6;i++)tone(500+i*60,i*.05,.05,'triangle',.07);},
+  chime(){[784,988,1175,1568].forEach((f,i)=>tone(f,i*.08,.5,'triangle',.14));},
+  fanfare(){[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,i*.13,.35,'square',.07));},
+};
+
+/* ---------------- speech ---------------- */
+const synth = window.speechSynthesis;
+let voices=[];
+function loadVoices(){if(!synth)return;voices=synth.getVoices().filter(v=>/^en[-_]/i.test(v.lang)||v.lang==='en');}
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+function chooseVoice(){
+  if(S.voice){const v=voices.find(v=>v.name===S.voice);if(v)return v;}
+  const pref=['Google US English','Samantha','Microsoft Aria','Microsoft Jenny','Microsoft Zira','Karen','Daniel','Google UK English Female'];
+  for(const p of pref){const v=voices.find(v=>v.name.startsWith(p));if(v)return v;}
+  return voices.find(v=>/en-US/i.test(v.lang))||voices[0]||null;
+}
+function speak(text){
+  return new Promise(res=>{
+    if(!synth||typeof SpeechSynthesisUtterance==='undefined'){toast('🔇 เบราว์เซอร์นี้เล่นเสียงอ่านไม่ได้ — ลองใช้ Chrome หรือ Edge');return res(false);}
+    synth.cancel();
+    setTimeout(()=>{
+      const u=new SpeechSynthesisUtterance(text);
+      const v=chooseVoice(); if(v){u.voice=v;u.lang=v.lang;} else u.lang='en-US';
+      u.rate=S.rate; u.pitch=1.05; u.volume=1;
+      let done=false;const fin=ok=>{if(done)return;done=true;$('#btnListen').classList.remove('glow');res(ok);};
+      u.onend=()=>fin(true);
+      u.onerror=e=>{if(e.error!=='interrupted'&&e.error!=='canceled')toast('🔇 เล่นเสียงไม่ได้ ('+e.error+') — ตรวจลำโพง/เสียงของเครื่อง');fin(false);};
+      $('#btnListen').classList.add('glow');
+      synth.speak(u);
+      setTimeout(()=>fin(true),6000);
+    },60);
+  });
+}
+function unlockSpeech(){ac();if(synth){try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;synth.speak(u);}catch(e){}}}
+
+/* ---------------- toast ---------------- */
+let toastT;
+function toast(msg,ms=4200){const t=$('#toast');t.textContent=msg;t.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>t.style.display='none',ms);}
+
+/* ---------------- kids ---------------- */
+function pose(p){
+  for(const k of ['boy','girl']){
+    const el=$('#'+k),img=el.querySelector('img'),src=IMG(`${k}_${p}`);
+    if(img.getAttribute('src')===src)continue;
+    img.setAttribute('src',src);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
+  }
+}
+
+/* ---------------- balls in globe (canvas physics) ---------------- */
+const cv=$('#balls'),cx=cv.getContext('2d');
+const CW=540,CH=430,DPR=2;cv.width=CW*DPR;cv.height=CH*DPR;
+const GC={x:270,y:262,R:252},FLOOR=398,BR=39;
+const capImgs={};COLORS.forEach(c=>{const i=new Image();i.src=IMG('cap_'+c);capImgs[c]=i;});
+let balls=[];let stirUntil=0;
+function rnd(a,b){return a+Math.random()*(b-a);}
+function addBall(drop=true){balls.push({x:rnd(120,420),y:drop?rnd(-40,140):rnd(250,360),vx:rnd(-60,60),vy:0,a:rnd(0,6.28),c:COLORS[Math.floor(Math.random()*5)]});}
+function syncBalls(instant){
+  const want=Math.min(remaining(),MAX_BALLS);
+  while(balls.length>want){balls.sort((a,b)=>b.y-a.y);balls.shift();}
+  while(balls.length<want)addBall(!instant);
+  if(instant)for(let i=0;i<200;i++)step(1/60);
+}
+function step(dt){
+  const stir=performance.now()<stirUntil;
+  for(const b of balls){
+    if(stir&&Math.random()<.09){b.vy-=rnd(500,1100);b.vx+=rnd(-500,500);}
+    b.vy+=1900*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vx*=.995;b.a+=b.vx*dt/BR;
+  }
+  for(let it=0;it<3;it++){
+    for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){
+      const p=balls[i],q=balls[j];let dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy)||.01;
+      if(d<BR*2){const o=(BR*2-d)/2,nx=dx/d,ny=dy/d;p.x-=nx*o;p.y-=ny*o;q.x+=nx*o;q.y+=ny*o;
+        const rv=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;if(rv<0){const im=-(1.3)*rv/2;p.vx-=im*nx;p.vy-=im*ny;q.vx+=im*nx;q.vy+=im*ny;}}
+    }
+    for(const b of balls){
+      const dx=b.x-GC.x,dy=b.y-GC.y,d=Math.hypot(dx,dy);
+      if(d>GC.R-BR){const nx=dx/d,ny=dy/d;b.x=GC.x+nx*(GC.R-BR);b.y=GC.y+ny*(GC.R-BR);const vn=b.vx*nx+b.vy*ny;if(vn>0){b.vx-=1.45*vn*nx;b.vy-=1.45*vn*ny;}}
+      if(b.y>FLOOR-BR){b.y=FLOOR-BR;if(b.vy>0)b.vy*=-.3;b.vx*=.97;}
+    }
+  }
+}
+let last=performance.now();
+function frame(now){
+  let dt=Math.min(.05,(now-last)/1000);last=now;
+  const n=Math.ceil(dt/(1/120));for(let i=0;i<n;i++)step(dt/n);
+  cx.setTransform(DPR,0,0,DPR,0,0);cx.clearRect(0,0,CW,CH);
+  for(const b of balls){const im=capImgs[b.c];if(!im.complete)continue;cx.save();cx.translate(b.x,b.y);cx.rotate(b.a);cx.drawImage(im,-BR-1,-BR-1,BR*2+2,BR*2+2);cx.restore();}
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- UI refresh ---------------- */
+function ballEl(n,c){const d=document.createElement('div');d.className='ball';const k=BALLCSS[c||COLORS[n%5]];d.style.setProperty('--c',k[0]);d.style.setProperty('--d',k[1]);d.textContent=n;return d;}
+function refresh(){
+  document.querySelectorAll('.range').forEach(b=>b.classList.toggle('on',+b.dataset.max===S.max));
+  $('#cnt').textContent=`${S.revealed.length} / ${S.max} · เหลือ ${remaining()}`;
+  const r=$('#recent');r.innerHTML='';
+  const last12=S.revealed.slice(-12).reverse();
+  if(!last12.length){const e=document.createElement('div');e.className='empty';e.innerHTML='ยังไม่มีเลขที่เปิดเฉลย<br>No numbers yet';r.appendChild(e);}
+  last12.forEach((n,i)=>{const b=ballEl(n);if(i===0)b.classList.add('new');r.appendChild(b);});
+  const canSpin=(phase==='idle'||phase==='revealed')&&remaining()>0&&!busy;
+  $('#btnSpin').disabled=!canSpin;$('#btnSpin').classList.toggle('glow',canSpin);
+  $('#btnReveal').disabled=!(phase==='pending'&&!busy);$('#btnReveal').classList.toggle('glow',phase==='pending'&&!busy);
+  $('#btnListen').disabled=!((phase==='pending'||phase==='revealed'||phase==='empty')&&!busy);
+  $('#btnNew').classList.toggle('glow',phase==='empty');
+  const d=$('#display');
+  if(phase==='pending'||phase==='spinning'){d.textContent='?';d.classList.remove('small');}
+  else if(phase==='revealed'&&S.revealed.length){d.textContent=S.revealed[S.revealed.length-1];d.classList.remove('small');}
+  else if(phase==='empty'){d.textContent='All done!';d.classList.add('small');}
+  else {d.textContent='Ready!';d.classList.add('small');}
+}
+
+/* ---------------- overlay helpers ---------------- */
+let capColor='coral';
+const anim=(el,kf,opt)=>el.animate(kf,Object.assign({fill:'forwards',easing:'ease-out'},opt)).finished;
+function setCap(c){capColor=c;$('#capWhole').src=IMG('cap_'+c);$('#capTop').src=IMG('top_'+c);$('#capBot').src=IMG('bot_'+c);$('#popcap').src=IMG('cap_'+c);}
+function closeCapsuleView(){
+  $('#capWhole').style.display='block';$('#capTop').style.display='none';$('#capBot').style.display='none';
+  ['#capTop','#capBot','#stagecap','#number','#mq','#mqText'].forEach(s=>{$(s).getAnimations().forEach(a=>a.cancel());$(s).style.opacity='';});
+}
+function hideOverlay(){
+  $('#dim').classList.remove('on');closeCapsuleView();
+  $('#number').textContent='';$('#mqText').innerHTML='';
+}
+function showListen(){
+  const t=$('#mqText');t.className='abs listen';
+  t.innerHTML='<div><span class="wave">👂</span> Listen!</div><div class="sub">ฟังเสียง แล้วหาเลขบนแผ่นบิงโก</div>';
+  anim($('#mq'),[{opacity:0,transform:'translateY(30px)'},{opacity:1,transform:'none'}],{duration:350});
+  anim(t,[{opacity:0},{opacity:1}],{duration:350,delay:150});
+}
+async function showClosedCapsule(fromChute){
+  $('#dim').classList.add('on');closeCapsuleView();
+  const sc=$('#stagecap');
+  if(fromChute){
+    await anim(sc,[{opacity:1,transform:'translate(0,370px) scale(.27)'},{opacity:1,transform:'translate(0,-40px) scale(1.08)',offset:.7},{opacity:1,transform:'translate(0,0) scale(1)'}],{duration:800,easing:'cubic-bezier(.3,.7,.3,1)'});
+  } else {
+    await anim(sc,[{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'scale(1)'}],{duration:400});
+  }
+  sc.animate([{transform:'rotate(0)'},{transform:'rotate(-5deg)'},{transform:'rotate(5deg)'},{transform:'rotate(0)'}],{duration:1600,iterations:Infinity,composite:'add'});
+  showListen();
+}
+
+/* ---------------- effects ---------------- */
+function burst(){
+  const fx=$('#fx');
+  const add=(src,x,y,w)=>{const i=new Image();i.src=src;i.className='abs';i.style.cssText=`left:${x-w/2}px;top:${y-w/2}px;width:${w}px`;fx.appendChild(i);return i;};
+  for(let k=0;k<7;k++){const s=add(IMG('star'),960,380,rnd(60,110));const ang=rnd(0,Math.PI*2),dist=rnd(260,460);
+    s.animate([{transform:'translate(0,0) scale(.2) rotate(0)',opacity:1},{transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist*.7}px) scale(1) rotate(${rnd(-200,200)}deg)`,opacity:1,offset:.7},{transform:`translate(${Math.cos(ang)*dist*1.1}px,${Math.sin(ang)*dist*.7+80}px) scale(.8)`,opacity:0}],{duration:1500,easing:'ease-out',fill:'forwards'}).finished.then(()=>s.remove());}
+  [[620,330,-1],[1300,330,1]].forEach(([x,y,dir])=>{const c=add(IMG('confetti'),x,y,260);if(dir<0)c.style.transform='scaleX(-1)';
+    c.animate([{opacity:0,transform:`scale(.3) ${dir<0?'scaleX(-1)':''}`},{opacity:1,transform:`scale(1.15) ${dir<0?'scaleX(-1)':''}`,offset:.3},{opacity:0,transform:`translateY(120px) scale(1.2) ${dir<0?'scaleX(-1)':''}`}],{duration:1900,fill:'forwards'}).finished.then(()=>c.remove());});
+  const cols=['#ff6f8e','#3cc6bb','#ffc531','#b47ff0','#5fd68d'];
+  for(let k=0;k<40;k++){const d=document.createElement('div');d.className='abs';const w=rnd(10,20);
+    d.style.cssText=`left:${rnd(300,1620)}px;top:-30px;width:${w}px;height:${w*1.6}px;background:${cols[k%5]};border-radius:3px`;fx.appendChild(d);
+    d.animate([{transform:'translateY(0) rotate(0)'},{transform:`translate(${rnd(-120,120)}px,${rnd(900,1100)}px) rotate(${rnd(360,1080)}deg)`}],{duration:rnd(1800,3000),delay:rnd(0,500),easing:'cubic-bezier(.3,.1,.6,1)',fill:'forwards'}).finished.then(()=>d.remove());}
+}
+
+/* ---------------- game actions ---------------- */
+async function spin(){
+  if(busy||!(phase==='idle'||phase==='revealed'))return;
+  const n=pickNumber(); if(n===null){phase='empty';refresh();return;}
+  busy=true;phase='spinning';
+  S.drawn.push(n);S.pending=n;save();
+  hideOverlay();refresh();pose('hope');
+  setCap(COLORS[Math.floor(Math.random()*5)]); // decorative only, never tied to the number
+  // crank + stir
+  stirUntil=performance.now()+1700;
+  $('#machine').classList.add('shake');
+  const h=$('#handle');
+  for(let i=0;i<8;i++)setTimeout(sfx.click,i*150);
+  await anim(h,[{transform:'rotate(0)'},{transform:'rotate(360deg)'}],{duration:1250,easing:'ease-in-out',fill:'none'});
+  await new Promise(r=>setTimeout(r,450));
+  $('#machine').classList.remove('shake');
+  balls.sort((a,b)=>b.y-a.y);if(balls.length)balls.shift();
+  setTimeout(()=>syncBalls(false),1400);
+  // capsule drops out of the chute
+  const pc=$('#popcap');sfx.roll();
+  await anim(pc,[{opacity:0,transform:'translateY(-30px) scale(.6)'},{opacity:1,transform:'translateY(10px) scale(1)',offset:.6},{opacity:1,transform:'translateY(40px) rotate(90deg)'}],{duration:600,easing:'ease-in'});
+  sfx.pop();
+  pc.getAnimations().forEach(a=>a.cancel());
+  await showClosedCapsule(true);
+  phase='pending';busy=false;refresh();
+  await speak(words(n));
+}
+function listen(){
+  if(busy)return;
+  const n = phase==='pending' ? S.pending : (phase==='revealed'||phase==='empty') ? S.revealed[S.revealed.length-1] : null;
+  if(n==null)return;
+  speak(words(n));
+}
+async function reveal(){
+  if(busy||phase!=='pending'||S.pending==null)return;
+  busy=true;
+  const n=S.pending;
+  S.revealed.push(n);S.pending=null;save();
+  phase = remaining()>0 ? 'revealed' : 'empty';
+  // open capsule
+  const sc=$('#stagecap');sc.getAnimations().forEach(a=>a.cancel());sc.style.opacity=1;
+  $('#capWhole').style.display='none';$('#capTop').style.display='block';$('#capBot').style.display='block';
+  sfx.chime();
+  anim($('#capTop'),[{transform:'none'},{transform:'translate(-290px,-110px) rotate(-30deg)'}],{duration:650,easing:'cubic-bezier(.2,.9,.3,1.2)'});
+  anim($('#capBot'),[{transform:'none'},{transform:'translate(250px,150px) rotate(18deg)'}],{duration:650,easing:'cubic-bezier(.2,.9,.3,1.2)'});
+  const num=$('#number');num.textContent=n;
+  anim(num,[{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1.15)',offset:.65},{opacity:1,transform:'scale(1)'}],{duration:600,delay:120});
+  const t=$('#mqText');t.className='abs';t.innerHTML=`<div>${words(n)}</div>`;
+  t.animate([{opacity:0},{opacity:1}],{duration:400,delay:250,fill:'forwards'});
+  $('#mq').style.opacity=1;
+  $('#live').textContent=`${n}, ${words(n)}`;
+  burst();pose('joy');
+  busy=false;refresh();
+  if(phase==='empty'){setTimeout(()=>{sfx.fanfare();toast('🎉 เลขหมดแล้ว! All numbers are out — กด New game เพื่อเริ่มใหม่',7000);},900);}
+  setTimeout(()=>{if(phase==='revealed'||phase==='empty')pose('wave');},3200);
+}
+function resetGame(max){
+  if(synth)synth.cancel();
+  S.max=max;S.drawn=[];S.revealed=[];S.pending=null;save();
+  phase='idle';busy=false;hideOverlay();pose('wave');syncBalls(false);refresh();
+}
+
+/* ---------------- modals ---------------- */
+function modal(html,onClose){
+  $('#card').innerHTML=html;$('#modal').classList.add('on');
+  const x=$('#card').querySelector('.x');if(x)x.onclick=closeModal;
+  modal.onClose=onClose;
+}
+function closeModal(){$('#modal').classList.remove('on');$('#card').innerHTML='';const f=modal.onClose;modal.onClose=null;if(f)f();}
+function confirmBox(title,msg,okLabel,ok){
+  modal(`<h2>${title}</h2><p>${msg}</p><div class="row">
+    <button class="pill p-teal bigbtn" id="mNo">Cancel<span class="sub">ยกเลิก</span></button>
+    <button class="pill p-coral bigbtn" id="mYes">${okLabel}</button></div>`);
+  $('#mNo').onclick=closeModal;$('#mYes').onclick=()=>{closeModal();ok();};
+}
+function startScreen(){
+  const saved=S.drawn.length>0;
+  let pick=S.max;
+  modal(`<h2>Funfair Number Gashapon</h2><p>กาชาปองสุ่มเลขภาษาอังกฤษ · ฟังเสียงก่อน แล้วค่อยเปิดเฉลย</p>
+    <p style="margin-top:22px"><b>Choose numbers · เลือกช่วงตัวเลข</b></p>
+    <div class="row" id="mRanges">
+      <button class="pill range p-teal" data-max="10">1 – 10</button><button class="pill range p-coral" data-max="20">1 – 20</button>
+      <button class="pill range p-lilac" data-max="50">1 – 50</button><button class="pill range p-yellow" data-max="100">1 – 100</button></div>
+    <div class="row">
+      <button class="pill p-teal bigbtn" id="mTest">🔊 Test sound<span class="sub">ทดลองเสียง</span></button>
+      <button class="pill p-coral bigbtn" id="mStart">▶ New game<span class="sub">เริ่มเกมใหม่</span></button>
+      ${saved?`<button class="pill p-yellow bigbtn" id="mCont">⏵ Continue<span class="sub">เล่นต่อ (1–${S.max} · ออกแล้ว ${S.drawn.length})</span></button>`:''}
+    </div>
+    <p class="keys">คีย์ลัด: Space = หมุน · L = ฟังอีกครั้ง · Enter = เปิดเฉลย · F = เต็มจอ</p>`);
+  const mark=()=>document.querySelectorAll('#mRanges .range').forEach(b=>b.classList.toggle('on',+b.dataset.max===pick));
+  mark();
+  document.querySelectorAll('#mRanges .range').forEach(b=>b.onclick=()=>{pick=+b.dataset.max;mark();});
+  $('#mTest').onclick=()=>{unlockSpeech();speak('Hello! Sixty-eight.');};
+  $('#mStart').onclick=()=>{unlockSpeech();closeModal();resetGame(pick);};
+  if(saved)$('#mCont').onclick=()=>{unlockSpeech();closeModal();continueGame();};
+}
+function continueGame(){
+  phase = S.pending!=null ? 'pending' : (remaining()===0 ? 'empty' : (S.revealed.length?'revealed':'idle'));
+  syncBalls(true);refresh();
+  if(phase==='pending'){pose('hope');setCap(COLORS[Math.floor(Math.random()*5)]);showClosedCapsule(false).then(()=>speak(words(S.pending)));}
+}
+function historyModal(tab='order'){
+  const rev=S.revealed;
+  let body='';
+  if(tab==='order'){
+    body = rev.length ? `<div class="order">${rev.map((n,i)=>{const b=ballEl(n);b.innerHTML=`<i>${i+1}</i>${n}`;return b.outerHTML;}).join('')}</div>` : '<p>ยังไม่มีเลขที่เปิดเฉลย</p>';
+  } else {
+    const set=new Set(rev);let cells='';for(let i=1;i<=S.max;i++)cells+=`<div class="${set.has(i)?'hit':''}">${i}</div>`;
+    body=`<div class="board">${cells}</div>`;
+  }
+  modal(`<button class="x">✕</button><h2>Numbers out · เลขที่ออกแล้ว</h2>
+    <p>${rev.length} / ${S.max} (แสดงเฉพาะเลขที่เปิดเฉลยแล้ว)</p>
+    <div class="tabs"><button class="chip ${tab==='order'?'on':''}" id="tOrder">In order · ตามลำดับ</button><button class="chip ${tab==='board'?'on':''}" id="tBoard">Board · ตาราง 1–${S.max}</button></div>${body}`);
+  $('#tOrder').onclick=()=>historyModal('order');$('#tBoard').onclick=()=>historyModal('board');
+}
+function settingsModal(){
+  loadVoices();
+  const cur=chooseVoice();
+  const opts=voices.map(v=>`<option value="${v.name.replace(/"/g,'&quot;')}" ${cur&&v.name===cur.name?'selected':''}>${v.name} (${v.lang})</option>`).join('');
+  modal(`<button class="x">✕</button><h2>Sound · เสียงอ่าน</h2><div class="set">
+    <label>Voice · เสียง</label>${voices.length?`<select id="sVoice">${opts}</select>`:'<p>ไม่พบเสียงภาษาอังกฤษในเครื่องนี้ — ลอง Chrome / Edge หรือติดตั้งเสียง English ในระบบ</p>'}
+    <label>Speed · ความเร็ว: <b id="sRateV"></b></label><input type="range" id="sRate" min="0.5" max="1.2" step="0.05" value="${S.rate}">
+    <div class="row"><button class="pill p-teal bigbtn" id="sTest">🔊 Test · ทดลอง</button></div></div>`);
+  const rv=()=>$('#sRateV').textContent=(+S.rate).toFixed(2)+(S.rate<.8?' (ช้า)':S.rate>1?' (เร็ว)':' (ปกติ)');rv();
+  $('#sRate').oninput=e=>{S.rate=+e.target.value;rv();save();};
+  if($('#sVoice'))$('#sVoice').onchange=e=>{S.voice=e.target.value;save();};
+  $('#sTest').onclick=()=>{unlockSpeech();speak('Seventy-seven. One hundred.');};
+}
+
+/* ---------------- wiring ---------------- */
+$('#btnSpin').onclick=spin;
+$('#btnReveal').onclick=reveal;
+$('#btnListen').onclick=listen;
+$('#btnNew').onclick=()=>{
+  if(busy)return;
+  if(S.drawn.length) confirmBox('New game?','เริ่มเกมใหม่จะล้างเลขที่ออกแล้วทั้งหมด','⟲ New game<span class="sub">ล้างและเริ่มใหม่</span>',()=>startScreen());
+  else startScreen();
+};
+document.querySelectorAll('#ranges .range').forEach(b=>b.onclick=()=>{
+  if(busy)return;const m=+b.dataset.max;if(m===S.max&&!S.drawn.length)return;
+  if(S.drawn.length) confirmBox('Change range?',`เปลี่ยนเป็น 1–${m} จะเริ่มเกมใหม่และล้างเลขที่ออกแล้ว`,'Change<span class="sub">เปลี่ยนและเริ่มใหม่</span>',()=>resetGame(m));
+  else resetGame(m);
+});
+$('#btnAll').onclick=()=>historyModal('order');
+$('#btnSettings').onclick=settingsModal;
+function toggleFull(){const d=document;if(!d.fullscreenElement){try{const r=(d.documentElement.requestFullscreen||d.documentElement.webkitRequestFullscreen||(()=>{})).call(d.documentElement);if(r&&r.catch)r.catch(()=>toast('เบราว์เซอร์ไม่อนุญาตเต็มจอในหน้านี้ — กด F11 หรือ Ctrl+Cmd+F แทน'));}catch(e){}}else{(d.exitFullscreen||d.webkitExitFullscreen).call(d);}}
+$('#btnFull').onclick=toggleFull;
+$('#dim').onclick=()=>{if(phase==='revealed'&&!busy)hideOverlay();};
+addEventListener('keydown',e=>{
+  if($('#modal').classList.contains('on')){if(e.key==='Escape'&&$('#card .x'))closeModal();return;}
+  if(e.repeat)return;
+  const k=e.key.toLowerCase();
+  if(k===' '||k==='s'){e.preventDefault();spin();}
+  else if(k==='enter'){e.preventDefault();reveal();}
+  else if(k==='l'||k==='r'){e.preventDefault();listen();}
+  else if(k==='f'){toggleFull();}
+});
+document.querySelectorAll('button').forEach(b=>b.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')e.preventDefault();}));
+
+/* ---------------- boot ---------------- */
+const preload=['bg','machine','handle','frame','marquee','pill_teal','pill_coral','pill_lilac','pill_yellow','star','confetti','elephant','bunny','duck',
+  ...['boy','girl'].flatMap(k=>['wave','hope','joy'].map(p=>`${k}_${p}`)),...COLORS.flatMap(c=>['cap_','top_','bot_'].map(p=>p+c))];
+Promise.all([...preload.map(n=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=IMG(n);})),document.fonts?document.fonts.load('700 40px Mali'):0]).then(()=>{
+  $('#loading').remove();
+  const d=load(); if(d) S=Object.assign(S,d);
+  if(![10,20,50,100].includes(S.max))S.max=100;
+  S.drawn=S.drawn.filter(n=>Number.isInteger(n)&&n>=1&&n<=S.max);
+  S.revealed=S.revealed.filter(n=>S.drawn.includes(n));
+  if(S.pending!=null&&(!S.drawn.includes(S.pending)||S.revealed.includes(S.pending)))S.pending=null;
+  syncBalls(true);refresh();requestAnimationFrame(frame);
+  startScreen();
+});
+})();
+</script>
+</body>
+</html>
